@@ -2,7 +2,7 @@
 replicaCount: 1
 
 image:
-  repository: gcr.io/niveus-technology-rnd/my-app
+  repository: gcr.io/tech-rnd-project/my-app
   tag: latest
   pullPolicy: Always
 
