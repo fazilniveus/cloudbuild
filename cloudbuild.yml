@@ -2,10 +2,12 @@ steps:
    - id: build
   # Build my-app image
     name: gcr.io/cloud_builders/docker
+    entrypoint: /bin/bash
     args:
-      - build
-      - -t
-      - gcr.io/$PROJECT_ID/my-app:$COMMIT_SHA
+      - -c
+      - gcr.io/$PROJECT_ID/my-app:$COMMIT_SHA--format \
+        '{{index .RepoTags 0}}@{{.Id}}' > /workspace/image-digest.txt &&
+        cat image-digest.txt
       - .
       
       
@@ -16,7 +18,7 @@ steps:
      args:
      - -c
      - |
-       gcloud artifacts docker images scan us-central1-docker.pkg.dev/$_PROJECT_ID/ods-build-repo/ods-test:latest \
+       gcloud artifacts docker images scan us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:$COMMIT_SHA \
        --format='value(response.scan)' > /workspace/scan_id.txt
    - id: severity check
      name: gcr.io/google.com/cloudsdktool/cloud-sdk
