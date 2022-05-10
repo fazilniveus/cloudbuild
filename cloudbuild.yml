@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_IMAGE_URL}:${_IMAGE_TAG}', '.']
+    args: ['build', '-c', '${_IMAGE_URL}:${_IMAGE_TAG}', '.']
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: 'bash'
     args: [ '-c', "gcloud secrets versions access latest --secret=sysdig_token --format='get(payload.data)' | tr '_-' '/+' | base64 -d > decrypted-data.txt" ]
