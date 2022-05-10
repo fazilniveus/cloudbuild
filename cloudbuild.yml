@@ -12,6 +12,14 @@ steps:
     args:
       - push
       - gcr.io/$PROJECT_ID/my-app:$COMMIT_SHA
+      
+      
+      
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_IMAGE_URL}:${_IMAGE_TAG}', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_IMAGE_URL}:${_IMAGE_TAG}']
+
 
   # Configure a kubeclt workspace for this project
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -41,3 +49,5 @@ timeout: 1200s
 substitutions:
   _CUSTOM_REGION: us-central1-c
   _CUSTOM_CLUSTER: build-gke
+  _IMAGE_URL: 'gcr.io/tech-rnd-project/my-app'
+  _IMAGE_TAG: 'latest'
