@@ -1,17 +1,17 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_IMAGE_URL}:${_IMAGE_TAG}', '.']
-  - name: gcr.io/cloud-builders/gcloud
-    entrypoint: 'bash'
-    args: [ '-c', "gcloud secrets versions access latest --secret=sysdig_token '${_IMAGE_URL}:${_IMAGE_TAG}' --format='get(payload.data)' | tr '_-' '/+' | base64 -d > decrypted-data.txt" ]
-  - name: 'sysdiglabs/secure-inline-scan'
-    entrypoint: 'bash'
-    args: [ '-c', '/bin/inline_scan.sh analyze -k $(cat decrypted-data.txt) ${_IMAGE_URL}:${_IMAGE_TAG}' ]
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/${_IMAGE_URL}:${_IMAGE_TAG}']
-  
-  
-  
+  # Build my-app image
+  - name: gcr.io/cloud_builders/docker
+    args:
+      - build
+      - -t
+      - gcr.io/$PROJECT_ID/my-app:$COMMIT_SHA
+      - .
+
+  # Push my-app image to Google Cloud Registry
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/my-app:$COMMIT_SHA
 
   # Configure a kubeclt workspace for this project
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -41,5 +41,3 @@ timeout: 1200s
 substitutions:
   _CUSTOM_REGION: us-central1-c
   _CUSTOM_CLUSTER: build-gke
-  _IMAGE_URL: 'gcr.io/tech-rnd-project/my-app'
-  _IMAGE_TAG: 'latest'
