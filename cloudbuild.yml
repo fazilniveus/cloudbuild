@@ -42,4 +42,4 @@ substitutions:
   _CUSTOM_REGION: us-central1-c
   _CUSTOM_CLUSTER: build-gke
   _IMAGE_URL: 'gcr.io/tech-rnd-project/my-app'
-  _IMAGE_TAG: 'latest'
+  _IMAGE_TAG: $COMMIT_SHA
