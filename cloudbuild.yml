@@ -1,45 +1,36 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_IMAGE_URL}:${_IMAGE_TAG}', '.']
-  - name: gcr.io/cloud-builders/gcloud
-    entrypoint: 'bash'
-    args: [ '-c', "gcloud secrets versions access latest --secret=sysdig_token '${_IMAGE_URL}:${_IMAGE_TAG}' --format='get(payload.data)' | tr '_-' '/+' | base64 -d > decrypted-data.txt" ]
-  - name: 'sysdiglabs/secure-inline-scan'
-    entrypoint: 'bash'
-    args: [ '-c', '/bin/inline_scan.sh analyze -k $(cat decrypted-data.txt) ${_IMAGE_URL}:${_IMAGE_TAG}' ]
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/${_IMAGE_URL}:${_IMAGE_TAG}']
-  
-  
-  
-
-  # Configure a kubeclt workspace for this project
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - cluster-info
-    env:
-      - CLOUDSDK_COMPUTE_REGION=$_CUSTOM_REGION
-      - CLOUDSDK_CONTAINER_CLUSTER=$_CUSTOM_CLUSTER
-      - KUBECONFIG=/workspace/.kube/config
-
-  # Deploy with Helm
-  - name: gcr.io/$PROJECT_ID/helm
-    args:
-      - upgrade
-      - -i
-      - my-app
-      - ./kubernetes
-      - --set
-      - image.repository=gcr.io/$PROJECT_ID/my-app,image.tag=$COMMIT_SHA
-      - -f
-      - ./kubernetes/values.yaml
-    env:
-      - KUBECONFIG=/workspace/.kube/config
-      - TILLERLESS=false
-      - TILLER_NAMESPACE=kube-system
-timeout: 1200s
-substitutions:
-  _CUSTOM_REGION: us-central1-c
-  _CUSTOM_CLUSTER: build-gke
-  _IMAGE_URL: 'gcr.io/tech-rnd-project/my-app'
-  _IMAGE_TAG: $COMMIT_SHA
+   - id: build
+     name: gcr.io/cloud-builders/docker
+     entrypoint: /bin/bash
+     args:
+     - -c
+     - |
+       docker build -t us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:latest -f ./Dockerfile . &&
+       docker image inspect us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:latest --format \
+       '{{index .RepoTags 0}}@{{.Id}}' > /workspace/image-digest.txt &&
+       cat image-digest.txt
+   - id: scan
+     name: gcr.io/google.com/cloudsdktool/cloud-sdk
+     entrypoint: gcloud
+     args:
+     - -c
+     - |
+       gcloud artifacts docker images scan us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:latest \
+       --format='value(response.scan)' > /workspace/scan_id.txt
+   - id: severity check
+     name: gcr.io/google.com/cloudsdktool/cloud-sdk
+     entrypoint: gcloud
+     args:
+     - -c
+     - |
+       gcloud artifacts docker images list-vulnerabilities $(cat /workspace/scan_id.txt) \
+       --format='value(vulnerability.effectiveSeverity)' | if grep -Fxq $_SEVERITY; \
+       then echo 'Failed vulnerability check' && exit 1; else exit 0; fi
+   - id: push
+     name: gcr.io/cloud-builders/docker
+     entrypoint: /bin/bash
+     args:
+     - -c
+     - |
+       docker push us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:latest
+images: ['us-central1-docker.pkg.dev/$_PROJECT_ID/my-app:latest']
