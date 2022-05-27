@@ -5,10 +5,8 @@ steps:
      args:
      - -c
      - |
-       docker build -t us-central1-docker.pkg.dev/$_PROJECT_ID/my-app/my-app:latest -f ./Dockerfile . &&
-       docker image inspect us-central1-docker.pkg.dev/$_PROJECT_ID/my-app/my-app:latest --format \
-       '{{index .RepoTags 0}}@{{.Id}}' > /workspace/image-digest.txt &&
-       cat image-digest.txt
+       docker build -t us-central1-docker.pkg.dev/$_PROJECT_ID/my-app/my-app:latest 
+
    - id: scan
      name: gcr.io/google.com/cloudsdktool/cloud-sdk
      entrypoint: gcloud
