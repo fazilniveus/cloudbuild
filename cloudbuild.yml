@@ -3,7 +3,12 @@ steps:
      name: 'gcr.io/cloud-builders/docker'
      args: ['build', '-t', 
            'us-central1-docker.pkg.dev/${PROJECT_ID}/my-app/my-app:latest', 
-           '-f','Dockerfile', '--format',  '.']
+           '-f','Dockerfile', '.']
+           
+     name: 'gcr.io/cloud-builders/docker'
+     entrypoint: "bash"
+     args: ['inspect', 'us-central1-docker.pkg.dev/${PROJECT_ID}/my-app/my-app:latest', 
+           '-f','Dockerfile', '{{index .RepoTags 0}}@{{.Id}} > /workspace/image-digest.txt', 'cat image-digest.txt', '.']
            
            
    - id: scan
