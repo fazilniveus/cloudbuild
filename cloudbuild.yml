@@ -1,7 +1,6 @@
 steps:
    - id: build
      name: 'gcr.io/cloud-builders/docker'
-     entrypoint: /bin/bash
      args: ['build', '-t', 
            'us-central1-docker.pkg.dev/${PROJECT_ID}/my-app/my-app:latest', 
            '-f', '.']
