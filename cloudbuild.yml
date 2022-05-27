@@ -4,7 +4,7 @@ steps:
      args: ['build', '-t', 
            'us-central1-docker.pkg.dev/${PROJECT_ID}/my-app/my-app:latest', 
            '-f','Dockerfile', '.']
-           
+   - id: inspect
      name: 'gcr.io/cloud-builders/docker'
      entrypoint: "bash"
      args: ['inspect', 'us-central1-docker.pkg.dev/${PROJECT_ID}/my-app/my-app:latest', 
